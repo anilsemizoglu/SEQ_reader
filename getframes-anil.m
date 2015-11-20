@@ -10,52 +10,52 @@
 %      and the 4x4 pixel group, adn create a matrix table
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear all;
-pkg load image;
+  clear all;
+  pkg load image;
 
-%constants
-numpix = 16384;
-camserial = 'AAR TC-2003#';
-iframe = 1:200; %indices of frames to be used for analysis
-fstartri = 512;
-framesize = 66960;
-
-%%%%%%%%%%%%%%%
-%uncomment next two lines for single file usage
-%%%%%%%%%%%%%%%
-
-%fname = 'run2-ND0.4-det20-amp-25';
-sdir =  'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\';
-run2dir = 'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\';
-
-%optional file select window pops up
-%[fname,sdir,filtx] = uigetfile('*.SEQ','Select Raw Sequence File', 'MultiSelect', 'on');
-
-cd('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\');
-
-
-seqfiles = dir('*.seq');
-nfiles = length(seqfiles);
-
-rangeId = fopen('ranges.txt','w');
-intenId = fopen('intensity.txt','w');
-    inten_mat = cell(16,2);
-    rang_mat = cell(16,2);
-    
-    
-
+  %constants
+  numpix = 16384;
+  camserial = 'AAR TC-2003#';
+  iframe = 1:200; %indices of frames to be used for analysis
+  fstartri = 512;
+  framesize = 66960;
+  y1=52; y2=54; x1=33;x2=35;
   
-  for k=1:nfiles;
+  %%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
+  sdir =  'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\';
+  run2dir = 'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\';
+  cd('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\');
+
+  %optional file select window pops up
+  %[fname,sdir,filtx] = uigetfile('*.SEQ','Select Raw Sequence File', 'MultiSelect', 'on');
+
+  %open all .seq files
+  seqfiles = dir('*.seq');
+   cd('C:\Users\ASemizoglu\Desktop\pixel-damage\src\');
+  nfiles = length(seqfiles);
+  
+  %text files to store the spatial 
+  %and time average data
+  rangeId = fopen('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\ranges.txt','w');
+  intenId = fopen('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\intensity.txt','w');
+  
+  %will store the spatial and time averages
+  inten_mat = cell(16,2);
+  rang_mat = cell(16,2);
+  
   f=1;
   
+  %file loop, loop over all .seq files in the folder
+  for k=1:nfiles;
+  
   fname = seqfiles(k).name;
+  fname_n = strrep(fname,'.seq',' ');
   path = strcat(sdir,fname);
   fid1 = fopen(path);
   
-  %xpxl = 25:87; %first half of measurements
-  %ypxl = 39:90; %first half of measurements
- 
   xpxl = 1:128;
   ypxl = 1:128;
 
@@ -72,95 +72,72 @@ intenId = fopen('intensity.txt','w');
   %------------
   %start here, above is all grabbing the data from the SEQ
   %------------
-
-  %create new figure # called by i
-  %f=1;
-  %figure(f);f++;
-
-  %av is the average of the 200 frames
-  av=mean(inten,3);
-
-  %create the color image, 
-  %put the colorbar for scale
-
-  fname_n = strrep(fname,'.seq',' ');
-  clf;
   
-  img_path = strcat(run2dir,'images\','av_inten_',fname_n);
- 
-  h = figure(f); 
-  set(h, 'Visible', 'on');
+  %int_av ran_av are the average of the 200 frames for all pixels
   
-  %img = imagesc(av);
-  %colorbar;
-  
-  %saveas(uint8(img),'figure.jpg');
-  %f++;
+  int_av=mean(inten,3);
+  ran_av=mean(rvector,3);
    
   %to access the pixel values it is [y,x]
-  mean_4 = mean(av(51,32:35));
-
-  %intensity 4x4 average
-  %take the average of the 4x4 pixels for each frame
-  %store the mean intensity value for each frame in inten_4
-  intensity_4 = zeros(1,200);
-
+  
+  %R&I SPATIAL average
+  %take the average of the spot of illuminated pixels for each frame
+  %store the mean R&I value for each frame in intensity_spot and range_spot
+  intensity_spot = zeros(1,200);
+  
   for i=1:200;
-    mean_i=mean(mean(inten(51:54,32:35,i)));
-    intensity_4(1,i) = mean_i;
-    end
-
-  %range 4x4 average
-  %take the average of the 4x4 pixels for each frame
-  %store the mean range value for each frame in range_4
-  
-  range_4 = zeros(1,200);
-
-  for i=1:200;
-    mean_r=mean(mean(rvector(51:54,32:35,i)));
-    range_4(1,i) = mean_r;
-    end
-
-
-    %average over 200 frames
-
-    intensity_av     = mean(intensity_4,2);
-    range_av         = mean(range_4,2);
-    
-    inten_mat(k,1) = fname_n;
-    rang_mat(k,1)  = fname_n;
-
-    inten_mat(k,2) = num2str(intensity_av);
-    rang_mat(k,2)  = num2str(range_av);
-    
-  
-    
-  %plot the average R&I on the 4x4 on the y-axis
-  %x-axis is the frame number
-    %{
-  range_4(range_4 > 10) = 0;
-  clf;
-  ran_fig=figure(f);
-  range_path = strcat(run2dir,'plots\range\',fname_n,'.jpg');
-  plot(range_4);
-  print(ran_fig,range_path,'-djpeg');
-  f++;
- 
-  clf;
-  int_fig=figure(f);
-  int_path = strcat(run2dir,'plots\intensity\',fname_n,'.jpg');
-  plot(intensity_4);
-  print(int_fig,int_path,'-djpeg');
-  f++;
-    %}
- 
-  end
-  
-    figure(100);
-
-    imagesc(av);
-    colorbar;
+   mean_i=mean(mean(inten(y1:y2,x1:x2,i)));
+   intensity_spot(1,i) = mean_i;
+   end 
    
+  range_spot = zeros(1,200);
+  
+  for i=1:200;
+   mean_r=mean(mean(rvector(y1:y2,x1:x2,i)));
+   range_spot(1,i) = mean_r;
+   end
+   
+  % fix the obvious errors, only couple times happens
+  for i=1:length(range_spot);
+    if (range_spot(1:i) > 10) range_spot(1:i) = 2;
+    end
+    
+  %R&I time average over frames
+  
+  intensity_av     = mean(intensity_spot,2);
+  range_av         = mean(range_spot,2);
+
+  % fill the inten_mat and rang_mat, 
+  % which stores the averages for each 
+  % seq file, first column name of the file
+  % second column the values
+  
+  inten_mat(k,1) = fname_n;
+  rang_mat(k,1)  = fname_n;
+  
+  inten_mat(k,2) = num2str(intensity_av);
+  rang_mat(k,2)  = num2str(range_av);
+  
+
+  % Save the time evolution fo R&I
+  range_path = strcat(run2dir,'plots\range\',fname_n,'.jpg');
+  ran_fig = figure(f);f++;
+  plot(range_spot);
+  saveas(ran_fig,range_path);
+  delete(ran_fig);
+  
+  inten_path = strcat(run2dir,'plots\intensity\',fname_n,'.jpg');
+  int_fig = figure(f);f++;
+  plot(intensity_spot);
+  saveas(int_fig,inten_path);
+  delete(int_fig);
+  y = waitforbuttonpress;
+  end %end of file loop
+
+  figure(55);
+  plot(intensity_spot);
+  
+  %save the matrices to text files
   
   [nrow,ncol]=size(inten_mat);
   
@@ -168,12 +145,9 @@ intenId = fopen('intensity.txt','w');
     fprintf(intenId,'%s %s \r\n',inten_mat{row,:});
     end
     
-   for row = 1:nrow
+  for row = 1:nrow
     fprintf(rangeId,'%s %s \r\n',rang_mat{row,:});
     end
   
   fclose(intenId);
   fclose(rangeId);
-  
-
-
