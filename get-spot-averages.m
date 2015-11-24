@@ -14,10 +14,14 @@ clear all;
 pkg load image;
 
 %pixel group to be used in averaging
-y1=52; y2=54; x1=33;x2=35;
+x1=63; x2=65; y1=76;y2=78;
 nframes = 200;
 
 %constants
+mkdir 'intensity';
+mkdir 'ranges';
+mkdir 'pics';
+
 numpix = 16384;
 camserial = 'AAR TC-2003#';
 iframe = 1:nframes; %indices of frames to be used for analysis
@@ -29,8 +33,8 @@ f=1;
 seqfiles = dir('*.seq');
 nfiles = length(seqfiles);
 
-rangeId = fopen('results\ranges.txt','w');
-intenId = fopen('results\intensity.txt','w');
+rangeId = fopen('ranges.txt','w');
+intenId = fopen('intensity.txt','w');
 
 %will store the spatial and time averages
 inten_mat = [1:nfiles];
@@ -48,13 +52,14 @@ for k=1:nfiles;
 
   %get image data
   %inten is counts, rvector stores the range in feet
- for frame=iframe(1):iframe(1)+size(iframe,2)-1;
-   fseek(fid1, fstartri+(frame-1)*framesize,'bof');   % start of R&I data
-   RIvector =  uint32(fread(fid1,numpix,'uint32','l'));
-   RIvector = fliplr(flip(reshape(RIvector,128,128)));
-   inten(:,:,frame-iframe(1)+1) = bitand(RIvector(ypxl,xpxl),4095);
-   rvector(:,:,frame-iframe(1)+1) = double(bitshift(RIvector(ypxl,xpxl),-12))./64;
-   end
+  for frame=iframe(1):iframe(1)+size(iframe,2)-1;
+    fseek(fid1, fstartri+(frame-1)*framesize,'bof');   % start of R&I data
+    RIvector =  uint32(fread(fid1,numpix,'uint32','l'));
+    RIvector = fliplr(flip(reshape(RIvector,128,128)));
+    inten(:,:,frame-iframe(1)+1) = bitand(RIvector(ypxl,xpxl),4095);
+    rvector(:,:,frame-iframe(1)+1) = double(bitshift(RIvector(ypxl,xpxl),-12))./64;
+  end
+  
   fclose(fid1);
   
   %R&I SPATIAL average
@@ -75,8 +80,8 @@ for k=1:nfiles;
    
     %fix the obvious errors, only couple times happens
   for i=1:nfiles;
-    if (range_spot(1,i) > 10) range_spot(1:i) = 2;
-    end    
+    if (range_spot(1,i) > 10) range_spot(1:i) = 2; 
+      end  
     end
   %R&I time average over frames  
   intensity_av     = mean(intensity_spot,2);
@@ -95,20 +100,32 @@ for k=1:nfiles;
 
   
   %Save the time evolution fo R&I
-  range_path = strcat('plots\range\',fname_n,'.jpg');
+  range_path = strcat('ranges\',fname_n,'.jpg');
   ran_fig = figure(f);f++;
   scatter(1:200,range_spot,4);
   saveas(ran_fig,range_path);
   delete(ran_fig);
   
-  inten_path = strcat('plots\intensity\',fname_n,'.jpg');
+  inten_path = strcat('intensity\',fname_n,'.jpg');
   int_fig = figure(f);f++;
   scatter(1:200,intensity_spot,4);
   saveas(int_fig,inten_path);
   delete(int_fig);
- end
- 
-for i=1:nfiles  
+  
+  pic_path = strcat('pics\',fname_n,'.jpg');
+  inten_pic = figure(f);f++;
+  imagesc(mean(inten,3));
+  colorbar;
+  print(inten_pic,pic_path);
+  delete(inten_pic);
+  end
+  %file loop
+
+
+   fprintf(intenId, '%s %d %s %d \r\n %s %d %s %d \r\n', ' x1:',x1,'x2:',x2,'y1:',y1,'y2:',y2);
+   fprintf(rangeId, '%s %d %s %d \r\n %s %d %s %d \r\n', ' x1:',x1,'x2:',x2,'y1:',y1,'y2:',y2);
+
+ for i=1:nfiles 
   fprintf(intenId,'%s %5.1f \r\n',file_names{1,i}, inten_mat(1,i));
   fprintf(rangeId,'%s %3.2f \r\n',file_names{1,i}, rang_mat(1,i));
   
@@ -116,3 +133,7 @@ for i=1:nfiles
   
   fclose(intenId);
   fclose(rangeId);
+  
+  
+
+  

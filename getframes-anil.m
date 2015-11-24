@@ -27,13 +27,13 @@
 
   sdir =  'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\';
   run2dir = 'C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\';
-  cd('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\');
+  %cd('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\');
 
   %optional file select window pops up
   %[fname,sdir,filtx] = uigetfile('*.SEQ','Select Raw Sequence File', 'MultiSelect', 'on');
 
   %open all .seq files
-  seqfiles = dir('*.seq');
+  seqfiles = dir('C:\Users\ASemizoglu\Desktop\pixel-damage\RUN2\run2-SEQ\*.seq');
    cd('C:\Users\ASemizoglu\Desktop\pixel-damage\src\');
   nfiles = length(seqfiles);
   
